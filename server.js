@@ -3,27 +3,29 @@ const express = require("express");
 const app = express();
 const PORT = 3000;
 
-// Middleware to parse JSON bodies
+// Parse JSON bodies
 app.use(express.json());
 
-// Echo endpoint
-app.post("/echo", (req, res) => {
-  const { message } = req.body;
+// Parse plain text bodies (only for text/plain)
+app.use(express.text({ type: "text/plain" }));
 
-  // Basic validation
-  if (!message) {
-    return res.status(400).json({
-      error: "No message provided"
-    });
+app.post("/echo", (req, res) => {
+  // If body is plain text
+  if (typeof req.body === "string") {
+    return res.status(200).send(req.body);
   }
 
-  // Echo back the same string
-  res.json({
-    echoedMessage: message
+  // If body is JSON and contains a message field
+  if (req.body && typeof req.body.message === "string") {
+    return res.status(200).send(req.body.message);
+  }
+
+  // Invalid or unsupported body
+  return res.status(400).json({
+    error: "Send either text/plain body or JSON with a 'message' field"
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Echo server running on http://localhost:${PORT}`);
 });
